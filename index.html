@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario Vue.js con Validación de Vuelo</title>
+  <link rel="stylesheet" href="index.css">
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Vue.js -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+  <header>
+    <div>
+      <picture class="portada-pic">
+        <img src="portada-avion.png" alt="">
+      </picture>
+      <h1>JetScript</h1>
+    </div>
+    <div>
+      <h3> No hay bugs en nuestras rutas, solo destinos
+      </h3>
+    </div>
+  </header>
+  <main>
+    <div id="app" class="container mt-5">
+      <!-- Título Datos del pasajero -->
+      <h2 class="mb-4">Datos del pasajero:</h2>
+      <form @submit.prevent="submitForm">
+        <!-- Datos personales -->
+        <div class="mb-3">
+          <label for="fullName" class="form-label">Apellido y Nombre</label>
+          <input
+            type="text"
+            id="fullName"
+            class="form-control"
+            v-model="form.fullName"
+            @input="validateName"
+            placeholder="Ingrese su apellido y nombre"
+            required
+          />
+          <div v-if="errors.fullName" class="text-danger mt-1">{{ errors.fullName }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="passportId" class="form-label">Número o ID de Pasaporte</label>
+          <input
+            type="text"
+            id="passportId"
+            class="form-control"
+            v-model="form.passportId"
+            @input="validatePassportId"
+            placeholder="Ingrese su número de pasaporte (ej: ABC123456)"
+            required
+          />
+          <div v-if="errors.passportId" class="text-danger mt-1">{{ errors.passportId }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="birthDate" class="form-label">Fecha de Nacimiento</label>
+          <input
+            type="date"
+            id="birthDate"
+            class="form-control"
+            v-model="form.birthDate"
+            @change="validateBirthDate"
+            required
+          />
+          <div v-if="errors.birthDate" class="text-danger mt-1">{{ errors.birthDate }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="nationality" class="form-label">Nacionalidad</label>
+          <select
+            id="nationality"
+            class="form-select"
+            v-model="form.nationality"
+            required
+          >
+            <option value="" disabled>Seleccione su nacionalidad</option>
+            <option v-for="country in countries" :key="country.nameES" :value="country.nameES">
+              {{ country.nameES }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Barra de Separación -->
+        <hr class="my-4">
+        
+        <!-- Título Datos del vuelo -->
+        <h3 class="mb-4">Datos del vuelo:</h3>
+  
+        <!-- Datos del vuelo -->
+        <div class="mb-3">
+          <label for="originCity" class="form-label">Ciudad de Origen</label>
+          <select
+            id="originCity"
+            class="form-select"
+            v-model="form.originCity"
+            @change="validateCities"
+            required
+          >
+            <option value="" disabled>Seleccione su ciudad de origen</option>
+            <option v-for="airport in airports" :key="airport.name" :value="airport.name">
+              {{ airport.name }}
+            </option>
+          </select>
+          <div v-if="errors.originCity" class="text-danger mt-1">{{ errors.originCity }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="destinationCity" class="form-label">Ciudad de Destino</label>
+          <select
+            id="destinationCity"
+            class="form-select"
+            v-model="form.destinationCity"
+            @change="validateCities"
+            required
+          >
+            <option value="" disabled>Seleccione su ciudad de destino</option>
+            <option v-for="airport in airports" :key="airport.name" :value="airport.name">
+              {{ airport.name }}
+            </option>
+          </select>
+          <div v-if="errors.destinationCity" class="text-danger mt-1">{{ errors.destinationCity }}</div>
+        </div>
+  
+        <!-- Nuevos campos -->
+        <div class="mb-3">
+          <label for="departureDate" class="form-label">Fecha de Salida</label>
+          <input
+            type="date"
+            id="departureDate"
+            class="form-control"
+            v-model="form.departureDate"
+            @change="validateDepartureDate"
+            required
+          />
+          <div v-if="errors.departureDate" class="text-danger mt-1">{{ errors.departureDate }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="returnDate" class="form-label">Fecha de Regreso</label>
+          <input
+            type="date"
+            id="returnDate"
+            class="form-control"
+            v-model="form.returnDate"
+            @change="validateReturnDate"
+          />
+          <div v-if="errors.returnDate" class="text-danger mt-1">{{ errors.returnDate }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="flightClass" class="form-label">Clase de Vuelo</label>
+          <select
+            id="flightClass"
+            class="form-select"
+            v-model="form.flightClass"
+            required
+          >
+            <option value="" disabled>Seleccione su clase de vuelo</option>
+            <option value="Económica">Económica</option>
+            <option value="Ejecutiva">Ejecutiva</option>
+            <option value="Primera Clase">Primera Clase</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="ticketCount" class="form-label">Número de Boletos</label>
+          <input
+            type="number"
+            id="ticketCount"
+            class="form-control"
+            v-model="form.ticketCount"
+            @input="validateTicketCount"
+            min="1"
+            max="10"
+            required
+          />
+          <div v-if="errors.ticketCount" class="text-danger mt-1">{{ errors.ticketCount }}</div>
+        </div>
+  
+        <!-- Barra de Separación -->
+        <hr class="my-4">
+  
+        <!-- Título Datos de pago -->
+        <h3 class="mb-4">Datos de pago:</h3>
+  
+        <!-- Datos de pago -->
+        <div class="mb-3" style="position: relative;">
+          <label for="creditCard" class="form-label">Número de tarjeta de crédito</label>
+          <div class="d-flex">
+            <input
+              type="text"
+              class="form-control"
+              v-model="form.cardPart1"
+              maxlength="4"
+              @input="formatCreditCard"
+              placeholder="0000"
+              required
+            />
+            <input
+              type="text"
+              class="form-control"
+              v-model="form.cardPart2"
+              maxlength="4"
+              @input="formatCreditCard"
+              placeholder="0000"
+              required
+            />
+            <input
+              type="text"
+              class="form-control"
+              v-model="form.cardPart3"
+              maxlength="4"
+              @input="formatCreditCard"
+              placeholder="0000"
+              required
+            />
+            <input
+              type="text"
+              class="form-control"
+              v-model="form.cardPart4"
+              maxlength="4"
+              @input="formatCreditCard"
+              placeholder="0000"
+              required
+            />
+          </div>
+          <div v-if="errors.creditCard" class="text-danger mt-1">{{ errors.creditCard }}</div>
+          <div v-if="cardType" class="mt-2 text-success">
+            <strong>Tipo de tarjeta:</strong> {{ cardType }}
+          </div>
+
+          <picture class="creditCard-pic">
+            <img class="creditCard-img" src="mastercard.png" alt="creditCard" draggable="false">
+          </picture>
+        </div>
+  
+        <!-- Fecha de vencimiento -->
+        <div class="mb-3">
+          <label for="expirationDate" class="form-label">Fecha de vencimiento (MM/AA)</label>
+          <input
+            type="text"
+            id="expirationDate"
+            class="form-control"
+            v-model="form.expirationDate"
+            maxlength="5"
+            placeholder="MM/AA"
+            @input="validateExpirationDate"
+            required
+          />
+          <div v-if="errors.expirationDate" class="text-danger mt-1">{{ errors.expirationDate }}</div>
+        </div>
+  
+        <!-- CVV -->
+        <div class="mb-3">
+          <label for="cvv" class="form-label">CVV</label>
+          <input
+            type="text"
+            id="cvv"
+            class="form-control"
+            v-model="form.cvv"
+            maxlength="4"
+            @input="validateCvv"
+            required
+          />
+          <div v-if="errors.cvv" class="text-danger mt-1">{{ errors.cvv }}</div>
+        </div>
+  
+        <!-- Nombre en la tarjeta -->
+        <div class="mb-3">
+          <label for="cardholderName" class="form-label">Nombre en la tarjeta</label>
+          <input
+            type="text"
+            id="cardholderName"
+            class="form-control"
+            v-model="form.cardholderName"
+            @input="validateCardholderName"
+            required
+          />
+          <div v-if="errors.cardholderName" class="text-danger mt-1">{{ errors.cardholderName }}</div>
+        </div>
+  
+        <!-- Botón de enviar -->
+        <button type="submit" class="btn btn-primary" :disabled="!isFormValid">Enviar</button>
+      </form>
+  
+      <!-- Resumen de los datos -->
+      <div id="resumen" v-if="submitted" class="mt-4">
+        <h4>Resumen de la información:</h4>
+        <p><strong>Nombre:</strong> {{ form.fullName }}</p>
+        <p><strong>Pasaporte:</strong> {{ form.passportId }}</p>
+        <p><strong>Fecha de nacimiento:</strong> {{ form.birthDate }}</p>
+        <p><strong>Nacionalidad:</strong> {{ form.nationality }}</p>
+        <p><strong>Ciudad de Origen:</strong> {{ form.originCity }}</p>
+        <p><strong>Ciudad de Destino:</strong> {{ form.destinationCity }}</p>
+        <p><strong>Fecha de Salida:</strong> {{ form.departureDate }}</p>
+        <p><strong>Fecha de Regreso:</strong> {{ form.returnDate }}</p>
+        <p><strong>Clase de Vuelo:</strong> {{ form.flightClass }}</p>
+        <p><strong>Número de Boletos:</strong> {{ form.ticketCount }}</p>
+        <p><strong>Tipo de tarjeta:</strong> {{ cardType }}</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div>
+      <h2>Descubre un nuevo horizonte con nosotros</h2>
+    </div>
+  </footer>
+
+
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          form: {
+            fullName: '',
+            passportId: '',
+            birthDate: '',
+            nationality: '',
+            originCity: '',
+            destinationCity: '',
+            departureDate: '',
+            returnDate: '',
+            flightClass: '',
+            ticketCount: 1,
+            cardPart1: '',
+            cardPart2: '',
+            cardPart3: '',
+            cardPart4: '',
+            expirationDate: '',
+            cvv: '',
+            cardholderName: ''
+          },
+          errors: {},
+          submitted: false,
+          countries: [],
+          airports: [
+            { name: 'Buenos Aires' },
+            { name: 'Madrid' },
+            { name: 'New York' },
+            { name: 'Tokyo' }
+          ],
+          cardType: null
+        };
+      },
+      computed: {
+        isFormValid() {
+          return !Object.values(this.errors).some((error) => error !== null);
+        }
+      },
+      methods: {
+        async fetchCountries() {
+          try {
+            const response = await fetch(
+              'https://gist.githubusercontent.com/eduardolat/b2a252d17b17363fab0974bb0634d259/raw/f96ed93dd28fbaf00c4c22fe634ef646a05923e3/countries.json'
+            );
+            const data = await response.json();
+
+            this.countries = data.map(country => ({ nameES: country.nameES }));
+            
+          } catch (error) {
+            console.error('Error al obtener las nacionalidades:', error);
+          }
+        },
+        validateName() {
+          const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$/;
+          if (!nameRegex.test(this.form.fullName)) {
+            this.errors.fullName = 'El nombre solo puede contener letras y espacios.';
+          } else {
+            this.errors.fullName = null;
+          }
+        },
+        validatePassportId() {
+          const passportRegex = /^[A-Za-z]{3}[0-9]{6}$/;
+          if (!passportRegex.test(this.form.passportId)) {
+            this.errors.passportId = 'El pasaporte debe tener el formato: 3 letras y 6 dígitos.';
+          } else {
+            this.errors.passportId = null;
+          }
+        },
+        validateBirthDate() {
+          const birthDate = new Date(this.form.birthDate);
+          const age = new Date().getFullYear() - birthDate.getFullYear();
+          if (age < 18) {
+            this.errors.birthDate = 'Debe ser mayor de 18 años.';
+          }else if(age > 100) {
+            this.errors.birthDate = 'La fecha ingresada es inválida';
+          } else {
+            this.errors.birthDate = null;
+          }
+        },
+        validateCities() {
+          if (this.form.originCity === this.form.destinationCity) {
+            this.errors.destinationCity = 'La ciudad de destino debe ser diferente a la de origen.';
+          } else {
+            this.errors.destinationCity = null;
+          }
+        },
+        validateDepartureDate() {
+          const departureDate = new Date(this.form.departureDate);
+          const currentDate = new Date();
+          if (departureDate <= currentDate) {
+            this.errors.departureDate = 'La fecha de salida debe ser posterior a la fecha actual.';
+          } else {
+            this.errors.departureDate = null;
+          }
+        },
+        validateReturnDate() {
+          if (this.form.returnDate) {
+            const departureDate = new Date(this.form.departureDate);
+            const returnDate = new Date(this.form.returnDate);
+            if (returnDate <= departureDate) {
+              this.errors.returnDate = 'La fecha de regreso debe ser posterior a la fecha de salida.';
+            } else {
+              this.errors.returnDate = null;
+            }
+          }
+        },
+        validateTicketCount() {
+          if (this.form.ticketCount < 1 || this.form.ticketCount > 10) {
+            this.errors.ticketCount = 'El número de boletos debe estar entre 1 y 10.';
+          } else {
+            this.errors.ticketCount = null;
+          }
+        },
+        validateCreditCard() {
+          const fullCardNumber = this.form.cardPart1 + this.form.cardPart2 + this.form.cardPart3 + this.form.cardPart4;
+          const visaRegex = /^4[0-9]{12}(?:[0-9]{3})?$/; 
+          const mastercardRegex = /^5[1-5][0-9]{14}$/; 
+          const amexRegex = /^3[47][0-9]{13}$/; 
+
+          const picture = document.querySelector('.creditCard-img');
+          const pictureContainer = document.querySelector('.creditCard-pic');
+
+          if (visaRegex.test(fullCardNumber)) {
+            this.errors.creditCard = null;
+            this.cardType = 'Visa';
+            picture.src = 'visa.jpg';
+            pictureContainer.classList.add('activo'); 
+          } else if (mastercardRegex.test(fullCardNumber)) {
+            this.errors.creditCard = null;
+            this.cardType = 'MasterCard';
+            picture.src = 'mastercard.png';
+            pictureContainer.classList.add('activo'); 
+          } else if (amexRegex.test(fullCardNumber)) {
+            this.errors.creditCard = null;
+            this.cardType = 'American Express';
+            picture.src = 'american-express.png';
+            pictureContainer.classList.add('activo'); 
+          } else {
+            this.errors.creditCard = 'El número de tarjeta no es válido. Solo Visa, MasterCard y American Express.';
+            this.cardType = null;
+            pictureContainer.classList.remove('activo'); 
+          }
+
+          setTimeout(() => {
+            pictureContainer.style.animation = 'hide 1000ms'
+          }, 3000);
+          setTimeout(() => {
+            pictureContainer.classList.remove('activo'); 
+            pictureContainer.style.animation = ''
+          }, 4000);
+        },
+        validateExpirationDate() {
+          const expirationRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+          if (!expirationRegex.test(this.form.expirationDate)) {
+            this.errors.expirationDate = 'La fecha de vencimiento debe estar en el formato MM/AA.';
+          } else {
+            this.errors.expirationDate = null;
+          }
+        },
+        validateCvv() {
+          const cvvRegex = /^[0-9]{3,4}$/;
+          if (!cvvRegex.test(this.form.cvv)) {
+            this.errors.cvv = 'El CVV debe ser de 3 o 4 dígitos.';
+          } else {
+            this.errors.cvv = null;
+          }
+        },
+        validateCardholderName() {
+          const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$/;
+          if (!nameRegex.test(this.form.cardholderName)) {
+            this.errors.cardholderName = 'El nombre en la tarjeta solo puede contener letras y espacios.';
+          } else {
+            this.errors.cardholderName = null;
+          }
+        },
+        formatCreditCard() {
+          this.form.cardPart1 = this.form.cardPart1.replace(/\D/g, '').slice(0, 4);
+          this.form.cardPart2 = this.form.cardPart2.replace(/\D/g, '').slice(0, 4);
+          this.form.cardPart3 = this.form.cardPart3.replace(/\D/g, '').slice(0, 4);
+          this.form.cardPart4 = this.form.cardPart4.replace(/\D/g, '').slice(0, 4);
+
+          const fullCardNumber = this.form.cardPart1 + this.form.cardPart2 + this.form.cardPart3 + this.form.cardPart4;
+          if (fullCardNumber.length === 16 || fullCardNumber.length === 15) {
+            this.validateCreditCard();
+          }
+        },
+        submitForm() {
+          this.submitted = true;
+          console.log(this.form);
+        }
+      },
+      mounted() {
+        this.fetchCountries();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
